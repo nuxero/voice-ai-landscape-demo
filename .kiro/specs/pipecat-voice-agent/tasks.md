@@ -18,8 +18,8 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
   - Verify submodule compose files are accessible
   - _Requirements: 2.1_
 
-- [-] 3. Implement Docker Compose orchestration
-  - [ ] 3.1 Create main `docker-compose.yml`
+- [x] 3. Implement Docker Compose orchestration
+  - [x] 3.1 Create main `docker-compose.yml`
     - Define pipecat-agent service with build configuration
     - Define ollama service with volume mounts
     - Include Speaches compose file using include directive
@@ -27,7 +27,7 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Set up service dependencies
     - _Requirements: 5.1, 5.2, 5.3, 5.6, 5.7, 5.8_
   
-  - [ ] 3.2 Create Dockerfile for Pipecat agent
+  - [x] 3.2 Create Dockerfile for Pipecat agent
     - Base on Python 3.12-slim
     - Install system dependencies (libgl1, libglib2.0-0, curl)
     - Install uv package manager
