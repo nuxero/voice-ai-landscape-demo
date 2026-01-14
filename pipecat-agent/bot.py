@@ -18,10 +18,8 @@ from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineTask, PipelineParams
 
 # Pipecat transport
-from pipecat.transports.network.small_webrtc_transport import (
-    SmallWebRTCTransport,
-    SmallWebRTCTransportParams,
-)
+from pipecat.transports.base_transport import TransportParams
+from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 
 # Pipecat processors
 from pipecat.processors.aggregators.llm_response import (
@@ -31,8 +29,7 @@ from pipecat.processors.aggregators.llm_response import (
 from pipecat.processors.frame_processor import FrameDirection
 
 # Pipecat services
-from pipecat.services.openai import OpenAILLMService, OpenAITTSService
-from pipecat.services.deepgram import DeepgramSTTService
+from pipecat.services.openai import OpenAILLMService, OpenAITTSService, OpenAISTTService
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 
 # Pipecat frames
@@ -96,7 +93,7 @@ async def run_bot(webrtc_connection) -> None:
     
     # Initialize STT service pointing to Speaches (Requirement 2.3)
     # Using OpenAI-compatible API format
-    stt = DeepgramSTTService(
+    stt = OpenAISTTService(
         api_key="not-needed",  # Speaches doesn't require API key
         url=f"{config.SPEACHES_BASE_URL}/v1/audio/transcriptions",
         model=config.STT_MODEL,

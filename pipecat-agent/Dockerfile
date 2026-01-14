@@ -10,12 +10,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv package manager
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+RUN pip install uv
 
 # Copy project files
 COPY pyproject.toml .
-COPY bot.py server.py index.html ./
+COPY bot.py server.py index.html config.py model_utils.py ./
 
 # Install dependencies using uv
 RUN uv pip install --system -r pyproject.toml

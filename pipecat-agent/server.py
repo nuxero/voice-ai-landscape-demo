@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 # Pipecat WebRTC imports
-from pipecat.transports.network.small_webrtc_transport import (
+from pipecat.transports.smallwebrtc.request_handler import (
     SmallWebRTCRequestHandler,
     SmallWebRTCRequest,
     SmallWebRTCPatchRequest,
