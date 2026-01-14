@@ -94,14 +94,14 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Test event handler registration
     - _Requirements: 1.2, 1.3, 1.4_
 
-- [ ] 6. Implement FastAPI server (server.py)
-  - [ ] 6.1 Create server.py with FastAPI app
+- [x] 6. Implement FastAPI server (server.py)
+  - [x] 6.1 Create server.py with FastAPI app
     - Initialize FastAPI application
     - Initialize SmallWebRTCRequestHandler
     - Load environment variables
     - _Requirements: 10.1_
   
-  - [ ] 6.2 Implement WebRTC offer endpoint
+  - [x] 6.2 Implement WebRTC offer endpoint
     - Create POST `/api/offer` endpoint
     - Handle SmallWebRTCRequest
     - Create webrtc_connection_callback
@@ -109,18 +109,18 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Return SDP answer
     - _Requirements: 10.2, 10.5, 10.7_
   
-  - [ ] 6.3 Implement ICE candidate endpoint
+  - [x] 6.3 Implement ICE candidate endpoint
     - Create PATCH `/api/offer` endpoint
     - Handle SmallWebRTCPatchRequest
     - Process ICE candidates
     - _Requirements: 10.3, 3.6_
   
-  - [ ] 6.4 Implement web interface endpoint
+  - [x] 6.4 Implement web interface endpoint
     - Create GET `/` endpoint
     - Serve index.html file
     - _Requirements: 10.4, 4.1_
   
-  - [ ] 6.5 Add health check endpoints
+  - [x] 6.5 Add health check endpoints
     - Create GET `/health` endpoint
     - Implement `check_ollama_health()`
     - Implement `check_speaches_health()`
