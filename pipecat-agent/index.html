@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pipecat Voice AI Agent - Real-time voice conversations powered by AI">
+    <title>Pipecat Voice Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .status-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .status-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-disconnected {
+            color: #6c757d;
+        }
+
+        .status-disconnected .status-indicator {
+            background: #6c757d;
+            animation: none;
+        }
+
+        .status-connecting {
+            color: #ffc107;
+        }
+
+        .status-connecting .status-indicator {
+            background: #ffc107;
+        }
+
+        .status-connected {
+            color: #28a745;
+        }
+
+        .status-connected .status-indicator {
+            background: #28a745;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .button-container {
+            margin: 30px 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button.disconnect {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        button.disconnect:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        .error-container {
+            margin-top: 20px;
+            padding: 16px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .error-container.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .error-message {
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .microphone-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        /* Hide audio element */
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="microphone-icon">🎤</div>
+        <h1>Pipecat Voice Agent</h1>
+        <p class="subtitle">Start a conversation with your AI assistant</p>
+
+        <!-- Connection Status Indicator (Requirement 4.4) -->
+        <div class="status-container">
+            <div class="status-label">Connection Status</div>
+            <div id="status" class="status-text status-disconnected">
+                <span class="status-indicator"></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+        </div>
+
+        <!-- Start/Stop Conversation Button (Requirement 4.2) -->
+        <div class="button-container">
+            <button id="connect-btn">Start Conversation</button>
+        </div>
+
+        <!-- Error Message Display Area (Requirement 4.4) -->
+        <div id="error-container" class="error-container">
+            <div class="error-title">⚠️ Connection Error</div>
+            <div id="error-message" class="error-message"></div>
+        </div>
+
+        <p class="info-text">
+            Click the button above to start talking with the AI agent. 
+            Make sure to allow microphone access when prompted.
+        </p>
+
+        <!-- Audio element for playing agent responses (Requirement 4.6) -->
+        <audio id="audio-el" autoplay></audio>
+    </div>
+
+    <script>
+        // DOM Elements
+        const statusEl = document.getElementById("status");
+        const statusTextEl = document.getElementById("status-text");
+        const buttonEl = document.getElementById("connect-btn");
+        const audioEl = document.getElementById("audio-el");
+        const errorContainerEl = document.getElementById("error-container");
+        const errorMessageEl = document.getElementById("error-message");
+
+        // Connection state
+        let connected = false;
+        let peerConnection = null;
+
+        /**
+         * Update connection status display (Requirement 4.4)
+         */
+        function updateStatus(status, text) {
+            statusEl.className = `status-text status-${status}`;
+            statusTextEl.textContent = text;
+        }
+
+        /**
+         * Show error message (Requirement 4.4)
+         */
+        function showError(message) {
+            errorMessageEl.textContent = message;
+            errorContainerEl.classList.add("show");
+        }
+
+        /**
+         * Hide error message (Requirement 4.4)
+         */
+        function hideError() {
+            errorContainerEl.classList.remove("show");
+        }
+
+        /**
+         * Send ICE candidate to server (Requirement 3.6)
+         */
+        async function sendIceCandidate(pc, candidate) {
+            try {
+                await fetch('/api/offer', {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        pc_id: pc.pc_id,
+                        candidates: [{
+                            candidate: candidate.candidate,
+                            sdp_mid: candidate.sdpMid,
+                            sdp_mline_index: candidate.sdpMLineIndex
+                        }]
+                    })
+                });
+            } catch (error) {
+                console.error("Error sending ICE candidate:", error);
+            }
+        }
+
+        /**
+         * Add event listeners to peer connection (Requirement 3.2, 3.3)
+         */
+        function addPeerConnectionEventListeners(pc) {
+            // Monitor ICE connection state
+            pc.oniceconnectionstatechange = () => {
+                console.log("ICE connection state:", pc.iceConnectionState);
+            };
+
+            // Monitor overall connection state (Requirement 3.2)
+            pc.onconnectionstatechange = () => {
+                console.log("Connection state:", pc.connectionState);
+                const connectionState = pc.connectionState;
+                
+                if (connectionState === 'connected') {
+                    onConnected();
+                } else if (connectionState === 'disconnected' || connectionState === 'failed') {
+                    onDisconnected();
+                    if (connectionState === 'failed') {
+                        showError("Connection failed. Please try again.");
+                    }
+                }
+            };
+
+            // Handle ICE candidates (Requirement 3.6)
+            pc.onicecandidate = async (event) => {
+                if (event.candidate) {
+                    console.log("New ICE candidate:", event.candidate);
+                    
+                    // Check if we can send ICE candidates (we have received the answer with pc_id)
+                    if (pc.canSendIceCandidates && pc.pc_id) {
+                        await sendIceCandidate(pc, event.candidate);
+                    } else {
+                        // Queue the candidate until we have pc_id
+                        pc.pendingIceCandidates.push(event.candidate);
+                    }
+                } else {
+                    console.log("All ICE candidates have been sent");
+                }
+            };
+
+            // Handle incoming audio tracks (Requirement 4.6, 3.3)
+            pc.ontrack = (event) => {
+                console.log("Received remote audio track");
+                audioEl.srcObject = event.streams[0];
+            };
+        }
+
+        /**
+         * Create WebRTC connection (Requirement 4.3, 4.5)
+         */
+        async function createWebRTCConnection(audioTrack) {
+            // Configure ICE servers for NAT traversal
+            const config = {
+                iceServers: [
+                    {
+                        urls: "stun:stun.l.google.com:19302"
+                    }
+                ]
+            };
+
+            // Create peer connection (Requirement 4.3)
+            const pc = new RTCPeerConnection(config);
+            
+            // Initialize ICE candidate queue
+            pc.pendingIceCandidates = [];
+            pc.canSendIceCandidates = false;
+            
+            // Add event listeners
+            addPeerConnectionEventListeners(pc);
+            
+            // Add audio track to connection (Requirement 4.5)
+            pc.addTransceiver(audioTrack, { direction: 'sendrecv' });
+            pc.addTransceiver('video', { direction: 'sendrecv' });
+            
+            // Create and set local description (Requirement 4.3)
+            await pc.setLocalDescription(await pc.createOffer());
+            const offer = pc.localDescription;
+            
+            // Send offer to server (Requirement 4.3)
+            const response = await fetch('/api/offer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    sdp: offer.sdp, 
+                    type: offer.type 
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            
+            // Handle SDP answer from server (Requirement 4.3)
+            const answer = await response.json();
+            pc.pc_id = answer.pc_id;
+            await pc.setRemoteDescription(answer);
+            
+            // Now we can send ICE candidates
+            pc.canSendIceCandidates = true;
+            
+            // Send any queued ICE candidates (Requirement 3.6)
+            for (const candidate of pc.pendingIceCandidates) {
+                await sendIceCandidate(pc, candidate);
+            }
+            pc.pendingIceCandidates = [];
+            
+            return pc;
+        }
+
+        /**
+         * Start conversation - connect to agent (Requirement 4.2)
+         */
+        async function connect() {
+            try {
+                hideError();
+                onConnecting();
+                
+                // Request microphone permissions (Requirement 4.5)
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Create WebRTC connection with audio track
+                peerConnection = await createWebRTCConnection(audioStream.getAudioTracks()[0]);
+                
+            } catch (error) {
+                console.error("Error connecting:", error);
+                onDisconnected();
+                
+                // Show appropriate error message
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    showError("Microphone access denied. Please allow microphone access and try again.");
+                } else if (error.name === 'NotFoundError') {
+                    showError("No microphone found. Please connect a microphone and try again.");
+                } else {
+                    showError(`Failed to connect: ${error.message}`);
+                }
+            }
+        }
+
+        /**
+         * Stop conversation - disconnect from agent (Requirement 4.2)
+         */
+        function disconnect() {
+            if (!peerConnection) {
+                return;
+            }
+            
+            peerConnection.close();
+            peerConnection = null;
+            onDisconnected();
+        }
+
+        /**
+         * UI state: Connecting (Requirement 4.4)
+         */
+        function onConnecting() {
+            updateStatus("connecting", "Connecting...");
+            buttonEl.textContent = "Connecting...";
+            buttonEl.disabled = true;
+            connected = false;
+        }
+
+        /**
+         * UI state: Connected (Requirement 4.4)
+         */
+        function onConnected() {
+            updateStatus("connected", "Connected");
+            buttonEl.textContent = "Stop Conversation";
+            buttonEl.className = "disconnect";
+            buttonEl.disabled = false;
+            connected = true;
+            hideError();
+        }
+
+        /**
+         * UI state: Disconnected (Requirement 4.4)
+         */
+        function onDisconnected() {
+            updateStatus("disconnected", "Disconnected");
+            buttonEl.textContent = "Start Conversation";
+            buttonEl.className = "";
+            buttonEl.disabled = false;
+            connected = false;
+        }
+
+        /**
+         * Button click handler (Requirement 4.2)
+         */
+        buttonEl.addEventListener("click", async () => {
+            if (!connected) {
+                await connect();
+            } else {
+                disconnect();
+            }
+        });
+    </script>
+</body>
+</html>
