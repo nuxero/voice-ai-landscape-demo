@@ -60,15 +60,15 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Test first-use download behavior
     - _Requirements: 8.2, 8.6_
 
-- [ ] 5. Implement core Pipecat agent (bot.py)
-  - [ ] 5.1 Create bot.py with imports and configuration
+- [x] 5. Implement core Pipecat agent (bot.py)
+  - [x] 5.1 Create bot.py with imports and configuration
     - Import all required Pipecat modules
     - Import OpenAI and Ollama services
     - Load environment variables
     - Define system instruction
     - _Requirements: 1.1, 7.1_
   
-  - [ ] 5.2 Implement `run_bot()` function
+  - [x] 5.2 Implement `run_bot()` function
     - Initialize SmallWebRTCTransport with VAD
     - Initialize OllamaLLMService with configured endpoint
     - Initialize OpenAISTTService pointing to Speaches
@@ -79,12 +79,12 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Create PipelineTask with metrics enabled
     - _Requirements: 1.2, 1.3, 1.4, 1.5, 2.3, 2.4, 3.1_
   
-  - [ ] 5.3 Add event handlers
+  - [x] 5.3 Add event handlers
     - Implement `on_client_connected` handler to queue LLMRunFrame
     - Implement `on_client_disconnected` handler to cancel task
     - _Requirements: 3.4, 3.5_
   
-  - [ ] 5.4 Add startup model checks
+  - [x] 5.4 Add startup model checks
     - Call `ensure_ollama_model()` before starting bot
     - Call `ensure_speaches_models()` before starting bot
     - _Requirements: 8.1, 8.2_
