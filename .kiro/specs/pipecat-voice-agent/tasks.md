@@ -36,8 +36,8 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Define startup command
     - _Requirements: 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [ ] 4. Implement model management utilities
-  - [ ] 4.1 Create Ollama model management function
+- [x] 4. Implement model management utilities
+  - [x] 4.1 Create Ollama model management function
     - Implement `ensure_ollama_model()` to check and pull models
     - Add logging for model pull progress
     - Handle timeouts and errors gracefully
@@ -49,7 +49,7 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Test error handling
     - _Requirements: 8.1, 8.6_
   
-  - [ ] 4.3 Create Speaches model management function
+  - [x] 4.3 Create Speaches model management function
     - Implement `ensure_speaches_models()` to check model availability
     - Add logging for model status
     - Handle auto-download on first use
