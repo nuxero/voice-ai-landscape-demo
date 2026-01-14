@@ -1,6 +1,6 @@
 services:
   pipecat-agent:
-    build: ./pipecat-agent
+    build: .
     ports:
       - "7860:7860"
     environment:
@@ -37,7 +37,7 @@ services:
     #           capabilities: [gpu]
 
 include:
-  - path: ./pipecat-agent/speaches/compose.${SPEACHES_MODE:-cpu}.yaml
+  - path: ./speaches/compose.${SPEACHES_MODE:-cpu}.yaml
     env_file: .env
 
 networks:

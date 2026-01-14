@@ -8,10 +8,8 @@ It orchestrates the pipeline connecting WebRTC transport, speech processing
 Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.3, 2.4, 3.1, 3.4, 3.5, 7.1, 8.1, 8.2
 """
 
-import os
 from typing import Optional
 
-from dotenv import load_dotenv
 from loguru import logger
 
 # Pipecat core imports
@@ -44,31 +42,9 @@ from pipecat.frames.frames import (
     TextFrame,
 )
 
-# Model management utilities
+# Configuration and utilities
+from config import config
 from model_utils import ensure_ollama_model, ensure_speaches_models
-
-# Load environment variables
-load_dotenv()
-
-# Configuration from environment variables (Requirement 7.1)
-SPEACHES_BASE_URL = os.getenv("SPEACHES_BASE_URL", "http://speaches:8000")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
-STT_MODEL = os.getenv("STT_MODEL", "Systran/faster-distil-whisper-small.en")
-TTS_MODEL = os.getenv("TTS_MODEL", "speaches-ai/Kokoro-82M-v1.0-ONNX")
-TTS_VOICE = os.getenv("TTS_VOICE", "af_heart")
-SYSTEM_INSTRUCTION = os.getenv(
-    "SYSTEM_INSTRUCTION",
-    "You are a helpful voice assistant. Provide clear, concise responses."
-)
-
-logger.info("Bot configuration loaded:")
-logger.info(f"  Speaches URL: {SPEACHES_BASE_URL}")
-logger.info(f"  Ollama URL: {OLLAMA_BASE_URL}")
-logger.info(f"  Ollama Model: {OLLAMA_MODEL}")
-logger.info(f"  STT Model: {STT_MODEL}")
-logger.info(f"  TTS Model: {TTS_MODEL}")
-logger.info(f"  TTS Voice: {TTS_VOICE}")
 
 
 async def run_bot(webrtc_connection) -> None:
@@ -99,8 +75,8 @@ async def run_bot(webrtc_connection) -> None:
     
     # Ensure models are available before starting (Requirements 8.1, 8.2)
     try:
-        await ensure_ollama_model(OLLAMA_BASE_URL, OLLAMA_MODEL)
-        await ensure_speaches_models(SPEACHES_BASE_URL, STT_MODEL, TTS_MODEL)
+        await ensure_ollama_model(config.OLLAMA_BASE_URL, config.OLLAMA_MODEL)
+        await ensure_speaches_models(config.SPEACHES_BASE_URL, config.STT_MODEL, config.TTS_MODEL)
     except Exception as e:
         logger.error(f"Failed to ensure models are available: {e}")
         raise
@@ -122,34 +98,34 @@ async def run_bot(webrtc_connection) -> None:
     # Using OpenAI-compatible API format
     stt = DeepgramSTTService(
         api_key="not-needed",  # Speaches doesn't require API key
-        url=f"{SPEACHES_BASE_URL}/v1/audio/transcriptions",
-        model=STT_MODEL,
+        url=f"{config.SPEACHES_BASE_URL}/v1/audio/transcriptions",
+        model=config.STT_MODEL,
     )
-    logger.info(f"STT service initialized: {STT_MODEL}")
+    logger.info(f"STT service initialized: {config.STT_MODEL}")
     
     # Initialize TTS service pointing to Speaches (Requirement 2.4)
     # Using OpenAI-compatible API format
     tts = OpenAITTSService(
         api_key="not-needed",  # Speaches doesn't require API key
-        base_url=f"{SPEACHES_BASE_URL}/v1",
-        model=TTS_MODEL,
-        voice=TTS_VOICE,
+        base_url=f"{config.SPEACHES_BASE_URL}/v1",
+        model=config.TTS_MODEL,
+        voice=config.TTS_VOICE,
     )
-    logger.info(f"TTS service initialized: {TTS_MODEL} with voice {TTS_VOICE}")
+    logger.info(f"TTS service initialized: {config.TTS_MODEL} with voice {config.TTS_VOICE}")
     
     # Initialize LLM service with Ollama (Requirement 1.4)
     llm = OpenAILLMService(
         api_key="not-needed",  # Ollama doesn't require API key
-        base_url=f"{OLLAMA_BASE_URL}/v1",
-        model=OLLAMA_MODEL,
+        base_url=f"{config.OLLAMA_BASE_URL}/v1",
+        model=config.OLLAMA_MODEL,
     )
-    logger.info(f"LLM service initialized: {OLLAMA_MODEL}")
+    logger.info(f"LLM service initialized: {config.OLLAMA_MODEL}")
     
     # Create initial conversation context with greeting (Requirement 1.5, 3.4)
     messages = [
         {
             "role": "system",
-            "content": SYSTEM_INSTRUCTION
+            "content": config.SYSTEM_INSTRUCTION
         },
         {
             "role": "system",

@@ -7,10 +7,8 @@ serves the web interface, and manages agent sessions.
 Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.7, 9.3, 9.4
 """
 
-import os
 from typing import Optional
 
-from dotenv import load_dotenv
 from loguru import logger
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -24,17 +22,9 @@ from pipecat.transports.network.small_webrtc_transport import (
     SmallWebRTCPatchRequest,
 )
 
-# Import bot runner
+# Configuration and bot runner
+from config import config
 from bot import run_bot
-
-# Load environment variables (Requirement 10.1)
-load_dotenv()
-
-# Configuration
-SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
-SERVER_PORT = int(os.getenv("SERVER_PORT", "7860"))
-SPEACHES_BASE_URL = os.getenv("SPEACHES_BASE_URL", "http://speaches:8000")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
 
 # Initialize FastAPI application (Requirement 10.1)
 app = FastAPI(
@@ -56,9 +46,9 @@ app.add_middleware(
 small_webrtc_handler = SmallWebRTCRequestHandler()
 
 logger.info("FastAPI server initialized")
-logger.info(f"  Server will run on {SERVER_HOST}:{SERVER_PORT}")
-logger.info(f"  Speaches URL: {SPEACHES_BASE_URL}")
-logger.info(f"  Ollama URL: {OLLAMA_BASE_URL}")
+logger.info(f"  Server will run on {config.SERVER_HOST}:{config.SERVER_PORT}")
+logger.info(f"  Speaches URL: {config.SPEACHES_BASE_URL}")
+logger.info(f"  Ollama URL: {config.OLLAMA_BASE_URL}")
 
 
 
@@ -177,7 +167,7 @@ async def check_ollama_health() -> bool:
     """
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+            response = await client.get(f"{config.OLLAMA_BASE_URL}/api/tags")
             return response.status_code == 200
     except Exception as e:
         logger.warning(f"Ollama health check failed: {e}")
@@ -195,7 +185,7 @@ async def check_speaches_health() -> bool:
     """
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{SPEACHES_BASE_URL}/v1/models")
+            response = await client.get(f"{config.SPEACHES_BASE_URL}/v1/models")
             return response.status_code == 200
     except Exception as e:
         logger.warning(f"Speaches health check failed: {e}")
@@ -241,11 +231,11 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     
-    logger.info(f"Starting Pipecat Voice Agent server on {SERVER_HOST}:{SERVER_PORT}")
+    logger.info(f"Starting Pipecat Voice Agent server on {config.SERVER_HOST}:{config.SERVER_PORT}")
     
     uvicorn.run(
         app,
-        host=SERVER_HOST,
-        port=SERVER_PORT,
+        host=config.SERVER_HOST,
+        port=config.SERVER_PORT,
         log_level="info"
     )

@@ -165,8 +165,8 @@ This implementation plan breaks down the development of a Pipecat-based voice AI
     - Test UI state updates
     - _Requirements: 4.2, 4.3, 4.5_
 
-- [ ] 8. Implement configuration management
-  - [ ] 8.1 Create configuration loading
+- [x] 8. Implement configuration management
+  - [x] 8.1 Create configuration loading
     - Load SPEACHES_BASE_URL from environment
     - Load OLLAMA_BASE_URL from environment
     - Load OLLAMA_MODEL from environment with default
