@@ -19,6 +19,7 @@ services:
       - ./index.html:/app/index.html
       - ./config.py:/app/config.py
       - ./model_utils.py:/app/model_utils.py
+      - ./kokoro_tts.py/:/app/kokoro_tts.py
     depends_on:
       - speaches
       - ollama
@@ -41,6 +42,10 @@ services:
     #         - driver: nvidia
     #           count: all
     #           capabilities: [gpu]
+
+  speaches:
+    networks:
+      - voice-agent-network
 
 include:
   - path: ./speaches/compose.${SPEACHES_MODE:-cpu}.yaml

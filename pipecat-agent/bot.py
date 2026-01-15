@@ -22,20 +22,21 @@ from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 
 # Pipecat processors
-from pipecat.processors.aggregators.llm_response import (
-    LLMAssistantContextAggregator,
-    LLMUserContextAggregator,
-)
+from pipecat.processors.aggregators.llm_context import LLMContext
+from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
 from pipecat.processors.frame_processor import FrameDirection
 
 # Pipecat services
-from pipecat.services.openai import OpenAILLMService, OpenAITTSService, OpenAISTTService
+from pipecat.services.openai import OpenAILLMService, OpenAISTTService
 from pipecat.audio.vad.silero import SileroVADAnalyzer
+
+# Custom services
+from kokoro_tts import KokoroTTSService
 
 # Pipecat frames
 from pipecat.frames.frames import (
     EndFrame,
-    LLMMessagesFrame,
+    LLMRunFrame,
     TextFrame,
 )
 
@@ -81,7 +82,7 @@ async def run_bot(webrtc_connection) -> None:
     # Initialize transport with VAD (Requirements 1.2, 1.3)
     transport = SmallWebRTCTransport(
         webrtc_connection=webrtc_connection,
-        params=SmallWebRTCTransportParams(
+        params=TransportParams(
             audio_in_enabled=True,
             audio_out_enabled=True,
             vad_enabled=True,
@@ -94,16 +95,16 @@ async def run_bot(webrtc_connection) -> None:
     # Initialize STT service pointing to Speaches (Requirement 2.3)
     # Using OpenAI-compatible API format
     stt = OpenAISTTService(
-        api_key="not-needed",  # Speaches doesn't require API key
-        url=f"{config.SPEACHES_BASE_URL}/v1/audio/transcriptions",
+        api_key="speaches",  # Speaches doesn't require API key
+        base_url=f"{config.SPEACHES_BASE_URL}/v1",
         model=config.STT_MODEL,
     )
     logger.info(f"STT service initialized: {config.STT_MODEL}")
     
     # Initialize TTS service pointing to Speaches (Requirement 2.4)
-    # Using OpenAI-compatible API format
-    tts = OpenAITTSService(
-        api_key="not-needed",  # Speaches doesn't require API key
+    # Using custom KokoroTTSService to support Kokoro-specific voices
+    tts = KokoroTTSService(
+        api_key="speaches",  # Speaches doesn't require API key
         base_url=f"{config.SPEACHES_BASE_URL}/v1",
         model=config.TTS_MODEL,
         voice=config.TTS_VOICE,
@@ -112,7 +113,7 @@ async def run_bot(webrtc_connection) -> None:
     
     # Initialize LLM service with Ollama (Requirement 1.4)
     llm = OpenAILLMService(
-        api_key="not-needed",  # Ollama doesn't require API key
+        api_key="ollama",  # Ollama doesn't require API key
         base_url=f"{config.OLLAMA_BASE_URL}/v1",
         model=config.OLLAMA_MODEL,
     )
@@ -125,27 +126,27 @@ async def run_bot(webrtc_connection) -> None:
             "content": config.SYSTEM_INSTRUCTION
         },
         {
-            "role": "system",
+            "role": "user",
             "content": "Start by greeting the user warmly and introducing yourself as a voice assistant."
         }
     ]
     
     # Create context aggregators for managing conversation (Requirement 1.5)
-    context_aggregator_user = LLMUserContextAggregator(messages)
-    context_aggregator_assistant = LLMAssistantContextAggregator(messages)
+    context = LLMContext(messages)
+    context_aggregator = LLMContextAggregatorPair(context)
     
     logger.info("Context aggregators initialized with system instruction")
     
     # Build the pipeline (Requirement 3.1)
     # Flow: Audio In → STT → User Context → LLM → Assistant Context → TTS → Audio Out
     pipeline = Pipeline([
-        transport.input(),           # Audio input from WebRTC
-        stt,                         # Speech-to-text
-        context_aggregator_user,     # Add user message to context
-        llm,                         # Generate LLM response
-        tts,                         # Text-to-speech
-        transport.output(),          # Audio output to WebRTC
-        context_aggregator_assistant # Add assistant message to context
+        transport.input(),              # Audio input from WebRTC
+        stt,                            # Speech-to-text
+        context_aggregator.user(),      # Add user message to context
+        llm,                            # Generate LLM response
+        tts,                            # Text-to-speech
+        transport.output(),             # Audio output to WebRTC
+        context_aggregator.assistant()  # Add assistant message to context
     ])
     logger.info("Pipeline built with all components")
     
@@ -172,8 +173,8 @@ async def run_bot(webrtc_connection) -> None:
         Requirement: 3.4
         """
         logger.info(f"Client connected: {client}")
-        # Trigger initial greeting by queuing the system messages
-        await task.queue_frames([LLMMessagesFrame(messages)])
+        # Trigger initial greeting by running the LLM
+        await task.queue_frames([LLMRunFrame()])
     
     # Event handler: Client disconnected (Requirement 3.5)
     @transport.event_handler("on_client_disconnected")

@@ -14,7 +14,7 @@ RUN pip install uv
 
 # Copy project files
 COPY pyproject.toml .
-COPY bot.py server.py index.html config.py model_utils.py ./
+COPY bot.py server.py index.html config.py model_utils.py kokoro_tts.py ./
 
 # Install dependencies using uv
 RUN uv pip install --system -r pyproject.toml
