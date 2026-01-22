@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: livekit-agent
+    env_file: .env
+    command: ["uv", "run", "python", "agent.py", "start"]
+    volumes:
+      - ./agent.py:/app/agent.py
+      - ./config.py:/app/config.py
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: livekit-server
+    ports:
+      - "7860:7860"
+    env_file: .env
+    command: ["uv", "run", "python", "server.py"]
+    volumes:
+      - ./server.py:/app/server.py
+      - ./index.html:/app/index.html
+      - ./config.py:/app/config.py
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:7860/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

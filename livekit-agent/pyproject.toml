@@ -1,0 +1,13 @@
+[project]
+name = "livekit-voice-agent"
+version = "0.1.0"
+description = "Voice AI agent using LiveKit Agents framework with Deepgram STT, Gemini LLM, and ElevenLabs TTS"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "livekit-agents[silero,turn-detector]~=1.3",
+    "livekit-plugins-noise-cancellation~=0.2",
+    "fastapi[standard]>=0.115.0",
+    "uvicorn>=0.32.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+]

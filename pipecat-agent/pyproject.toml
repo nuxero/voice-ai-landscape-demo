@@ -11,7 +11,3 @@ dependencies = [
     "loguru>=0.7.2",
     "httpx>=0.27.0",
 ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"

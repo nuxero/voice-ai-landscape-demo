@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveKit Voice Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .icon-container {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .icon-container:hover {
+            transform: scale(1.05);
+        }
+
+        .microphone-icon {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .status-container {
+            margin: 30px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f5f5f5;
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-disconnected {
+            background: #e74c3c;
+        }
+
+        .status-connecting {
+            background: #f39c12;
+        }
+
+        .status-connected {
+            background: #27ae60;
+        }
+
+        .status-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .connect-button {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .connect-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .connect-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .connect-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 10px;
+            color: #c33;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .audio-visualizer {
+            display: none;
+            margin: 20px 0;
+            height: 60px;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .audio-visualizer.show {
+            display: flex;
+        }
+
+        .visualizer-bar {
+            width: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-container">
+            <svg class="microphone-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+        </div>
+
+        <h1>Voice Agent</h1>
+        <p class="subtitle">Powered by LiveKit</p>
+
+        <div class="status-container">
+            <span class="status-indicator status-disconnected" id="status-indicator"></span>
+            <span class="status-text" id="status-text">Disconnected</span>
+        </div>
+
+        <div class="audio-visualizer" id="audio-visualizer">
+            <div class="visualizer-bar" style="height: 20px;"></div>
+            <div class="visualizer-bar" style="height: 35px;"></div>
+            <div class="visualizer-bar" style="height: 50px;"></div>
+            <div class="visualizer-bar" style="height: 35px;"></div>
+            <div class="visualizer-bar" style="height: 20px;"></div>
+        </div>
+
+        <button class="connect-button" id="connect-button">Connect</button>
+
+        <div class="error-message" id="error-message"></div>
+    </div>
+
+    <audio id="audio-element" autoplay></audio>
+
+    <!-- LiveKit Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client@latest/dist/livekit-client.umd.min.js"></script>
+
+    <script>
+        // Wait for LiveKit library to load
+        window.addEventListener('load', function() {
+            // Check if LiveKit loaded correctly
+            if (typeof LivekitClient === 'undefined') {
+                console.error('LiveKit client library failed to load');
+                document.getElementById('error-message').textContent = 'Failed to load LiveKit library. Please refresh the page.';
+                document.getElementById('error-message').classList.add('show');
+                return;
+            }
+
+            // UI Elements
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const connectButton = document.getElementById('connect-button');
+            const errorMessage = document.getElementById('error-message');
+            const audioElement = document.getElementById('audio-element');
+            const audioVisualizer = document.getElementById('audio-visualizer');
+
+            // LiveKit imports from global
+            const { Room, RoomEvent } = LivekitClient;
+
+            // State
+            let room = null;
+            let connected = false;
+
+        // Update UI based on connection state
+        function updateStatus(state, message) {
+            statusIndicator.className = 'status-indicator';
+            statusText.textContent = message;
+
+            switch (state) {
+                case 'disconnected':
+                    statusIndicator.classList.add('status-disconnected');
+                    connectButton.textContent = 'Connect';
+                    connectButton.disabled = false;
+                    audioVisualizer.classList.remove('show');
+                    break;
+                case 'connecting':
+                    statusIndicator.classList.add('status-connecting');
+                    connectButton.textContent = 'Connecting...';
+                    connectButton.disabled = true;
+                    break;
+                case 'connected':
+                    statusIndicator.classList.add('status-connected');
+                    connectButton.textContent = 'Disconnect';
+                    connectButton.disabled = false;
+                    audioVisualizer.classList.add('show');
+                    break;
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // Hide error message
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        // Connect to LiveKit room
+        async function connect() {
+            try {
+                updateStatus('connecting', 'Connecting...');
+                hideError();
+
+                // Get connection details from server
+                const response = await fetch('/connect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        participant_identity: 'user-' + Math.random().toString(36).substr(2, 9)
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to get connection details');
+                }
+
+                const { url, token, room_name } = await response.json();
+                console.log('Got connection details for room:', room_name);
+
+                // Create and connect to LiveKit room
+                room = new Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                    // Audio settings
+                    audioCaptureDefaults: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    }
+                });
+
+                // Set up event listeners
+                room.on(RoomEvent.Connected, async () => {
+                    console.log('Connected to room');
+                    
+                    // Enable microphone after connection is established
+                    try {
+                        console.log('Enabling microphone...');
+                        await room.localParticipant.setMicrophoneEnabled(true);
+                        console.log('Microphone enabled and published');
+                        
+                        // Verify the track is active
+                        const micPublication = room.localParticipant.getTrackPublication(LivekitClient.Track.Source.Microphone);
+                        if (micPublication && micPublication.track) {
+                            console.log('Microphone track details:', {
+                                kind: micPublication.track.kind,
+                                enabled: micPublication.track.mediaStreamTrack.enabled,
+                                readyState: micPublication.track.mediaStreamTrack.readyState,
+                                muted: micPublication.isMuted,
+                                sid: micPublication.trackSid
+                            });
+                        } else {
+                            console.warn('Microphone track not found after enabling');
+                        }
+                        
+                        updateStatus('connected', 'Connected');
+                        connected = true;
+                    } catch (micError) {
+                        console.error('Failed to enable microphone:', micError);
+                        showError('Failed to enable microphone: ' + micError.message);
+                        updateStatus('disconnected', 'Disconnected');
+                        await room.disconnect();
+                    }
+                });
+
+                room.on(RoomEvent.Disconnected, () => {
+                    console.log('Disconnected from room');
+                    updateStatus('disconnected', 'Disconnected');
+                    connected = false;
+                    room = null;
+                });
+
+                room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+                    console.log('Track subscribed:', track.kind, 'from', participant.identity);
+                    if (track.kind === 'audio') {
+                        const element = track.attach();
+                        document.body.appendChild(element);
+                        console.log('Audio track attached to DOM');
+                    }
+                });
+
+                room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+                    console.log('Track unsubscribed:', track.kind);
+                    track.detach();
+                });
+
+                room.on(RoomEvent.ParticipantConnected, (participant) => {
+                    console.log('Participant connected:', participant.identity, 'kind:', participant.kind);
+                });
+
+                room.on(RoomEvent.LocalTrackPublished, (publication, participant) => {
+                    console.log('Local track published:', publication.kind, 'source:', publication.source, 'sid:', publication.trackSid);
+                    
+                    // Double check the track is active
+                    if (publication.track && publication.track.mediaStreamTrack) {
+                        console.log('Published track state:', {
+                            enabled: publication.track.mediaStreamTrack.enabled,
+                            readyState: publication.track.mediaStreamTrack.readyState,
+                            muted: publication.track.mediaStreamTrack.muted
+                        });
+                    }
+                });
+
+                room.on(RoomEvent.TrackMuted, (publication, participant) => {
+                    console.log('Track muted:', publication.kind, 'from', participant.identity);
+                });
+
+                room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+                    console.log('Track unmuted:', publication.kind, 'from', participant.identity);
+                });
+
+                // Connect to the room
+                console.log('Connecting to room...');
+                await room.connect(url, token);
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                showError(error.message || 'Failed to connect. Please check your microphone permissions.');
+                updateStatus('disconnected', 'Disconnected');
+                connected = false;
+            }
+        }
+
+        // Disconnect from LiveKit room
+        async function disconnect() {
+            if (room) {
+                await room.disconnect();
+                room = null;
+            }
+            updateStatus('disconnected', 'Disconnected');
+            connected = false;
+        }
+
+        // Handle connect button click
+        connectButton.addEventListener('click', async () => {
+            if (!connected) {
+                await connect();
+            } else {
+                await disconnect();
+            }
+        });
+
+        // Animate visualizer bars
+        function animateVisualizer() {
+            const bars = document.querySelectorAll('.visualizer-bar');
+            bars.forEach(bar => {
+                const height = Math.random() * 40 + 10;
+                bar.style.height = height + 'px';
+            });
+        }
+
+        setInterval(animateVisualizer, 150);
+        
+        }); // End of window.addEventListener('load')
+    </script>
+</body>
+</html>
