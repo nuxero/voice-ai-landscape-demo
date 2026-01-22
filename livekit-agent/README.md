@@ -15,88 +15,22 @@ A voice AI agent built using the LiveKit Agents framework with Deepgram for spee
 ## Requirements
 
 - Python >= 3.10, < 3.14
-- uv package manager
+- Docker and Docker Compose (for containerized deployment)
 - LiveKit Cloud account (or self-hosted LiveKit server)
-
-## Setup
-
-1. Install dependencies:
-
-```bash
-uv sync
-```
-
-2. Copy the example environment file and configure it:
-
-```bash
-cp .env.example .env
-```
-
-3. Edit `.env` and add your LiveKit credentials:
-   - Get your credentials from https://cloud.livekit.io
-   - Set `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`
-
-4. Download required model files:
-
-```bash
-uv run agent.py download-files
-```
-
-## Running the Agent
-
-### Development Mode
-
-Start the agent in development mode:
-
-```bash
-uv run agent.py dev
-```
-
-Then open the Agents Playground at https://cloud.livekit.io to test your agent.
-
-### Console Mode
-
-Run the agent in your terminal:
-
-```bash
-uv run agent.py console
-```
-
-### Production Mode
-
-Start both the agent server and HTTP server:
-
-```bash
-# Option 1: Run both manually in separate terminals
-# Terminal 1 - Agent server
-uv run agent.py
-
-# Terminal 2 - HTTP server
-uv run server.py
-```
-
-Then open http://localhost:7860 in your browser.
 
 ## Docker Deployment
 
 Build and run with Docker Compose (runs both services in separate containers):
 
 ```bash
+cp .env.example .env
+# Add your livekit credentials
 docker-compose up --build
 ```
 
 This starts two containers:
 - **agent**: Connects to LiveKit and handles voice AI sessions
 - **server**: Serves the web interface on port 7860
-
-To run only one service:
-```bash
-# Run only the agent
-docker-compose up agent
-
-# Run only the server
-docker-compose up server
-```
 
 ## Project Structure
 
