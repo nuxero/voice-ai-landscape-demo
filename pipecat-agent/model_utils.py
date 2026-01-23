@@ -77,57 +77,61 @@ async def ensure_speaches_models(
     timeout: float = 600.0
 ) -> None:
     """
-    Check Speaches model availability.
+    Ensure Speaches models are downloaded and available.
     
-    Speaches automatically downloads models on first API request, so this function
-    primarily checks and logs model status. If models are not yet downloaded, they
-    will be automatically fetched when first used.
+    This function checks if the specified STT and TTS models are available,
+    and downloads them if they're not present. Models are downloaded using
+    the POST /v1/models/{model_id} endpoint.
     
     Args:
         base_url: Speaches service URL (e.g., "http://speaches:8000")
         stt_model: STT model name (e.g., "Systran/faster-distil-whisper-small.en")
         tts_model: TTS model name (e.g., "speaches-ai/Kokoro-82M-v1.0-ONNX")
-        timeout: Maximum time in seconds to wait for API response (default: 600)
+        timeout: Maximum time in seconds to wait for model download (default: 600)
     
     Raises:
         httpx.HTTPError: If the Speaches service is unreachable or returns an error
-        httpx.TimeoutException: If the request exceeds the timeout
+        httpx.TimeoutException: If the model download exceeds the timeout
     
     Requirements: 8.2, 8.5, 8.6
     """
     client = httpx.AsyncClient(base_url=base_url, timeout=timeout)
     
     try:
-        logger.info("Checking Speaches model availability")
+        logger.info("Ensuring Speaches models are available")
         
-        # Check available models via OpenAI-compatible endpoint
-        response = await client.get("/v1/models")
-        response.raise_for_status()
-        models_data = response.json().get("data", [])
-        model_ids = [m.get("id") for m in models_data]
-        
-        # Check STT model
-        if stt_model in model_ids:
-            logger.info(f"STT model {stt_model} is available")
+        # Download STT model (returns 200 if downloaded, 201 if already exists)
+        logger.info(f"Ensuring STT model {stt_model} is available (this may take a few minutes, ~150MB)...")
+        stt_response = await client.post(f"/v1/models/{stt_model}")
+        if stt_response.status_code == 200:
+            logger.info(f"STT model {stt_model} downloaded successfully")
+        elif stt_response.status_code == 201:
+            logger.info(f"STT model {stt_model} already exists")
         else:
-            logger.info(f"STT model {stt_model} will be downloaded on first use (~150MB)")
+            stt_response.raise_for_status()
         
-        # Check TTS model
-        if tts_model in model_ids:
-            logger.info(f"TTS model {tts_model} is available")
+        # Download TTS model (returns 200 if downloaded, 201 if already exists)
+        logger.info(f"Ensuring TTS model {tts_model} is available (this may take a few minutes, ~80MB)...")
+        tts_response = await client.post(f"/v1/models/{tts_model}")
+        if tts_response.status_code == 200:
+            logger.info(f"TTS model {tts_model} downloaded successfully")
+        elif tts_response.status_code == 201:
+            logger.info(f"TTS model {tts_model} already exists")
         else:
-            logger.info(f"TTS model {tts_model} will be downloaded on first use (~80MB)")
+            tts_response.raise_for_status()
+        
+        logger.info("All Speaches models are now available")
             
     except httpx.TimeoutException as e:
-        logger.error(f"Timeout while checking Speaches models: {e}")
-        logger.error("Speaches service may be slow to respond or unavailable")
+        logger.error(f"Timeout while downloading Speaches models: {e}")
+        logger.error("Model downloads may take several minutes depending on your connection")
         raise
     except httpx.HTTPError as e:
-        logger.error(f"HTTP error while checking Speaches models: {e}")
+        logger.error(f"HTTP error while downloading Speaches models: {e}")
         logger.error("Ensure Speaches service is running and accessible")
         raise
     except Exception as e:
-        logger.error(f"Unexpected error while checking Speaches models: {e}")
+        logger.error(f"Unexpected error while ensuring Speaches models: {e}")
         raise
     finally:
         await client.aclose()
