@@ -23,8 +23,6 @@ services:
     depends_on:
       - speaches
       - ollama
-    networks:
-      - voice-agent-network
 
   ollama:
     image: ollama/ollama:latest
@@ -32,8 +30,6 @@ services:
       - "11434:11434"
     volumes:
       - ollama-models:/root/.ollama
-    networks:
-      - voice-agent-network
     # Uncomment for GPU support
     # deploy:
     #   resources:
@@ -43,16 +39,13 @@ services:
     #           count: all
     #           capabilities: [gpu]
 
-  speaches:
-    networks:
-      - voice-agent-network
-
 include:
   - path: ./speaches/compose.${SPEACHES_MODE:-cpu}.yaml
     env_file: .env
 
 networks:
-  voice-agent-network:
+  default:
+    name: voice-agent-network
     driver: bridge
 
 volumes:
